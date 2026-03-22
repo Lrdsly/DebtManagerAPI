@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
 
 from users.models import MemberShip
 # Enter your code here.
@@ -19,7 +19,9 @@ class PublicUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ("name", "username", "status", "joined_rooms", "rooms", "last_login", "date_joined")
         extra_kwargs = {
-            "password": {"write_only": True}
+            "password": {"write_only": True},
+            "date_joined": {"read_only": True},
+            "last_login": {"read_only": True}
         }
     
     def get_fields(self):
@@ -65,14 +67,46 @@ class UserSerializer(PublicUserSerializer):
 
     def get_fields(self):
         fields = super().get_fields()
-        view = self.context.get("view")
-        action = getattr(view, "action", None)
-        request = getattr(view, "request", None)
+        request = self.context.get("request")
 
-        if self.context["is_owner"]:
-            print("-"*100)
-            print("this is the user")
-        elif self.context["is_staff"]:
-            print("-"*100)
-            print("this is the user")
+        if not request.user.is_staff:
+            exclude = ["user_permissions", "is_active", "is_staff", "is_superuser", "is_suspend"]
+            for key in exclude:
+                fields.pop(key)
+
         return fields
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        request = self.context.get("request")
+
+        user = authenticate(request, 
+                            username=attrs.get("username"),
+                            password=attrs.get("password"))
+        if not user:
+            raise serializers.ValidationError("username of password is not correct.")
+        attrs["user"] = user
+        return attrs
+
+
+class RegisterSerializer(serializers.ModelSerializer):
+    repassword = serializers.CharField(required=True)
+    class Meta:
+        model = User
+        fields = ("name", "username", "password", "repassword")
+        extra_kwargs = {
+            "name": {"required": False}
+        }
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+  
+        if attrs.get("password") != attrs.get("repassword"):
+            raise serializers.ValidationError("passwords didn't match correct.")
+        
+        return super().validate(attrs)
