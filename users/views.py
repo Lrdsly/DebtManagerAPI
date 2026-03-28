@@ -64,3 +64,25 @@ class RegisterView(APIView):
                                 status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    http_method_names = ["post"]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data
+        )
+        serializer.is_valid(raise_exception=True)
+
+        user = self.request.user
+        if not user.check_password(serializer.validated_data["old_password"]):
+            return Response(
+                {"message": "Old password is incorrect."},
+                status=400
+            )
+        user.set_password(serializer.validated_data["new_password"])
+        user.save()
+
+        return Response({"message": "Password updated successfully."})
