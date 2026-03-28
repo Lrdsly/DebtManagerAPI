@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 
 from users.serializers import *
+from users.utils import permissions
 # Create your views here.
 
 User = get_user_model()
@@ -16,16 +17,30 @@ User = get_user_model()
 class UserView(ModelViewSet):
     queryset = User.objects.all()
     lookup_field = "username"
-    permission_classes = [IsAuthenticated]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["view"] = self
+        return context
 
     def get_serializer_class(self):
         if self.request.user == self.get_object() or self.request.user.is_staff:
             return UserSerializer
         return PublicUserSerializer
 
+    def get_permissions(self):
+        if self.action in ["retrieve", "list"]:
+            permission_classes = [IsAuthenticated]
+
+        elif self.action in ["update", "partial_update", "destroy"]:
+            permission_classes = [permissions.IsOwner]
+        
+        return [permission() for permission in permission_classes]
+
 
 class LoginView(APIView):
     http_method_names = ["post"]
+    permission_classes = [~IsAuthenticated]
     def post(self, request, *args, **kwargs):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():

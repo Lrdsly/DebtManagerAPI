@@ -7,7 +7,7 @@ from users.models import MemberShip
 
 User = get_user_model()
 
-
+# why should password and... be exists (in any type of ro, wo etc) in public serializer
 class PublicUserSerializer(serializers.ModelSerializer):
     joined_rooms = serializers.SerializerMethodField()
     rooms = serializers.SerializerMethodField()
@@ -57,7 +57,8 @@ class PublicUserSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(PublicUserSerializer):
-    
+    # total_debt 
+
     class Meta:
         model = User
         exclude = ("room",)
@@ -68,11 +69,32 @@ class UserSerializer(PublicUserSerializer):
     def get_fields(self):
         fields = super().get_fields()
         request = self.context.get("request")
+        view = self.context.get("view")
+        action = getattr(view, "action", None)
 
         if not request.user.is_staff:
-            exclude = ["user_permissions", "is_active", "is_staff", "is_superuser", "is_suspend"]
-            for key in exclude:
-                fields.pop(key)
+
+            if action == "list":
+                allowed = ["name", "username", "joined_rooms", "status"]
+            elif action == "retrieve":
+                allowed = ["name", "username", "joined_rooms", "rooms", "status", "last_login", "created_at"]
+            elif action in ["update", "partial_update"]:
+                # where should I add password change?
+                allowed = ["name", "username"]
+            fields = {key: value for key, value in fields.items() if key in allowed}
+
+        elif request.user.is_staff: # staff permissions
+            
+            if action == "list":
+                allowed = ["name", "username", "joined_rooms", "status"]
+            elif action == "retrieve":
+                allowed = ["name", "username", "joined_rooms", "rooms", "lost_login", "created_at",
+                            "is_premium", "is_staff", "is_superuser", "is_suspend", "user_permissions"]
+            elif action in ["update", "partial_update"]:
+                allowd = ["is_suspend", "is_premium"]
+                if request.user.is_superuser:
+                    allowed.append("is_staff")
+            fields = {key: value for key, value in fields.items() if key in allowed}
 
         return fields
 
