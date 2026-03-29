@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
-from users.models import Room, FriendShip, MemberShip
+from users.models import Room, FriendShip, MemberShip, ModeChoise
 # Create your models here.
 
 User = get_user_model()
@@ -53,3 +53,22 @@ class Debt(models.Model):
         room_memberships = MemberShip.objects.filter(room=self.room).values_list("user__username", flat=True)
         if not self.creditor.username in room_memberships or not self.debtor.username in room_memberships:
             raise ValidationError("Debtor and Creditor must be in the room at the same time")
+   
+    def _suggest_next_status(self, current_status):
+        if current_status == StatusDebt.PENDING:
+            if self.room.mode in [ModeChoise.TRUSTED, ModeChoise.HALFTRUSTED]:
+                return StatusDebt.CONFIRMED
+            return current_status
+        elif current_status == StatusDebt.PAIED:
+            if self.room.mode == ModeChoise.Trusted:
+                return StatusDebt.PAYCONFIRMED
+            return current_status
+        return current_status
+
+    def change_status(self, new_status, user):
+        suggested_status = self._suggest_next_status(new_status)
+        self.status = suggested_status
+        self.save()
+        if suggested_status != new_status:
+            return suggested_status
+        else: return new_status
