@@ -66,9 +66,19 @@ class Debt(models.Model):
         return current_status
 
     def change_status(self, new_status, user):
+        current_status = self.status
         suggested_status = self._suggest_next_status(new_status)
         self.status = suggested_status
         self.save()
+   
         if suggested_status != new_status:
             return suggested_status
         else: return new_status
+
+
+class StatusLog(models.Model):
+    user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
+    debt = models.ForeignKey(Debt, on_delete=models.DO_NOTHING)
+    from_status = models.ForeignKey(StatusDebt)
+    to_status = models.ForeignKey(StatusDebt)
+    operated_at = models.DateTimeField(auto_now_add=True)
