@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth import authenticate
 
-from users.models import MemberShip
+from users.models import MemberShip, Notification
 # Enter your code here.
 
 User = get_user_model()
@@ -143,3 +143,10 @@ class ChangePasswordSerializer(serializers.Serializer):
         if attrs["new_password"] != attrs["confirm_new_password"]:
             raise serializers.ValidationError("Password didn't match.")
         return attrs
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Notification
+        exclude = ("id",)

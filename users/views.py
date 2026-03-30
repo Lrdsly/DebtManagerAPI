@@ -9,6 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from users.serializers import *
 from users.utils import permissions
+from users.models import Notification
 # Create your views here.
 
 User = get_user_model()
@@ -86,3 +87,10 @@ class ChangePasswordView(APIView):
         user.save()
 
         return Response({"message": "Password updated successfully."})
+
+class NotificationView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        notifications = Notification.objects.filter(reciver=self.request.user)
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
