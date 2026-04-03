@@ -1,8 +1,10 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 
-from users.models import MemberShip, Notification
+from users.models import MemberShip, Room, Notification
+from users.utils import counters
+from debts.models import Debt
 # Enter your code here.
 
 User = get_user_model()
@@ -24,19 +26,6 @@ class PublicUserSerializer(serializers.ModelSerializer):
             "last_login": {"read_only": True}
         }
     
-    def get_fields(self):
-        fields = super().get_fields()
-        view = self.context.get("view")
-        action = getattr(view, "action", None)
-
-        if action == "list":
-            allowed = {"name", "username", "joined_room"}
-            fields = {name: field for name,field in fields.items() if name in allowed}
-        if action == "retrieve":
-            pass
-
-        return fields
- 
     def get_joined_rooms(self, obj):
         return MemberShip.objects.filter(user=obj).count()
     
@@ -54,7 +43,7 @@ class PublicUserSerializer(serializers.ModelSerializer):
         elif obj.is_premium:
             return "premium account"
         return "normal user"
-
+    
 
 class UserSerializer(PublicUserSerializer):
     # total_debt 
@@ -150,3 +139,37 @@ class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
         exclude = ("id",)
+
+
+class RoomSerializer(serializers.ModelSerializer):
+    members_count = serializers.SerializerMethodField()
+    members_property = serializers.SerializerMethodField()
+    room_value = serializers.SerializerMethodField()
+    mode = serializers.CharField()
+    admin = serializers.CharField(source="admin.username")
+
+    class Meta:
+        model = Room
+        exclude = ("id",)
+
+    def get_members_count(self, obj):
+        return MemberShip.objects.filter(room=obj).count()
+
+    def get_room_value(self, obj):
+        room_value = counters.get_total_value(obj.slug)
+        return room_value
+    
+    def get_members_property(self, obj):
+        members = MemberShip.objects.filter(room=obj).values_list('user__username', flat=True)
+        members_property = []
+        for username in members:
+            total_debt = counters.get_user_total_debt(obj.slug, username)
+            members_property.append({
+                "username": username,
+                "totaol_debt": total_debt
+            })
+        return members_property
+
+
+class RoomFilterSerializer(serializers.Serializer):
+    username = serializers.CharField(required=False, max_length=50)
