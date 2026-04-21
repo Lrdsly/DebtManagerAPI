@@ -1,8 +1,9 @@
 from rest_framework import serializers
-from django.contrib.auth import get_user_model
-from django.contrib.auth import authenticate
 
-from users.models import MemberShip, Notification
+from django.contrib.auth import get_user_model, authenticate
+from django.db.models import Q
+
+from users.models import MemberShip, Notification, FriendShip
 # Enter your code here.
 
 User = get_user_model()
@@ -13,11 +14,11 @@ class PublicUserSerializer(serializers.ModelSerializer):
     rooms = serializers.SerializerMethodField()
     last_login = serializers.SerializerMethodField()
     status = serializers.SerializerMethodField()
-
+    friends = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ("name", "username", "status", "joined_rooms", "rooms", "last_login", "date_joined")
+        fields = ("name", "username", "status", "joined_rooms", "rooms", "last_login", "date_joined", "friends")
         extra_kwargs = {
             "password": {"write_only": True},
             "date_joined": {"read_only": True},
@@ -54,6 +55,11 @@ class PublicUserSerializer(serializers.ModelSerializer):
         elif obj.is_premium:
             return "premium account"
         return "normal user"
+    
+    def get_friends(self, obj):
+        friendships = FriendShip.objects.filter(Q(user1=obj) | Q(user2=obj))
+        friends = [f.user2.username if f.user1 == obj else f.user1.username for f in friendships]
+        return friends
 
 
 class UserSerializer(PublicUserSerializer):
@@ -72,26 +78,24 @@ class UserSerializer(PublicUserSerializer):
         view = self.context.get("view")
         action = getattr(view, "action", None)
 
-        if not request.user.is_staff:
 
-            if action == "list":
+        if action == "list":
                 allowed = ["name", "username", "joined_rooms", "status"]
-            elif action == "retrieve":
+        elif action == "retrieve":
                 allowed = ["name", "username", "joined_rooms", "rooms", "status", "last_login", "created_at"]
-            elif action in ["update", "partial_update"]:
+        
+        if not request.user.is_staff: # user own
+            if action in ["update", "partial_update"]:
                 # where should I add password change?
                 allowed = ["name", "username"]
             fields = {key: value for key, value in fields.items() if key in allowed}
 
         elif request.user.is_staff: # staff permissions
-            
-            if action == "list":
-                allowed = ["name", "username", "joined_rooms", "status"]
-            elif action == "retrieve":
-                allowed = ["name", "username", "joined_rooms", "rooms", "lost_login", "created_at",
-                            "is_premium", "is_staff", "is_superuser", "is_suspend", "user_permissions"]
+            if action == "retrieve":
+                # allowed initialized before in top conditions
+                allowed.extend(["is_premium", "is_staff", "is_superuser", "is_suspend", "user_permissions"])
             elif action in ["update", "partial_update"]:
-                allowd = ["is_suspend", "is_premium"]
+                allowed = ["is_suspend", "is_premium"]
                 if request.user.is_superuser:
                     allowed.append("is_staff")
             fields = {key: value for key, value in fields.items() if key in allowed}
