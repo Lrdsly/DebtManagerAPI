@@ -40,7 +40,7 @@ class Command(BaseCommand):
             if room_created:
                 self.stdout.write(self.style.SUCCESS(f"room{r} Created Suucessfully."))
             else:
-                self.stdout.write(self.style.NOTICE(f"roomr{r} already exists."))
+                self.stdout.write(self.style.NOTICE(f"room{r} already exists."))
             ordinary_rooms.append(room)
 
         # create 10 random debts

@@ -58,7 +58,7 @@ class NotificationStatus(models.IntegerChoices):
 
 class Notification(models.Model):
 
-    reciver = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     title = models.CharField(_("title"), max_length=50)
     text = models.TextField(_("notification text"), max_length=500, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -101,13 +101,13 @@ class FriendShipStatus(models.IntegerChoices):
 # develop this model later. (changing status, endpoints and...)
 class FriendShip(models.Model):
         
-    user1 = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, related_name="freindsip_user1")
+    user1 = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, related_name="friendship_user1")
     user2 = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, related_name="friendship_user2")
     status = models.IntegerField(_("status"), choices=FriendShipStatus, default=1)
     since = models.DateTimeField(_("since"), auto_now_add=True)
 
     class Meta:
-        # Avoid building 2 ralations between users (one time User A be user1 and in other time as user2)
+        # Avoid building 2 relations between users (one time User A be user1 and in other time as user2)
         unique_together = ('user1', 'user2')
     
     def save(self, *args, **kwargs):

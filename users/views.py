@@ -50,9 +50,9 @@ class LoginView(APIView):
         serializer = LoginSerializer(data=request.data)
         if serializer.is_valid():
             login(request, serializer.validated_data.get("user"))
-            return Response(status=status.HTTP_200_OK, data={"Messagee": "you logged in successfully.",
+            return Response(status=status.HTTP_200_OK, data={"Message": "you logged in successfully.",
                                                              "username": serializer.validated_data.get('username')})
-        return Response(serializer.error_messages)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 # Add login rate limit later
 class RegisterView(APIView):
@@ -95,7 +95,7 @@ class ChangePasswordView(APIView):
 class NotificationView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
-        notifications = Notification.objects.filter(reciver=self.request.user)
+        notifications = Notification.objects.filter(receiver=self.request.user)
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 class RoomView(ModelViewSet):

@@ -1,6 +1,3 @@
-from django.shortcuts import render
-from django.contrib.auth import get_user_model
-
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
@@ -24,7 +21,7 @@ class DebtView(ModelViewSet):
 
     def get_permissions(self):
         if self.action in ["confirm", "reject", "pay", "confirm_payment"]:
-            if self.action in ["confirm", "reject", "paied"]:
+            if self.action in ["confirm", "reject", "paid"]:
                 permission_classes = [permissions.IsCreditor]
             elif self.action in ["confirm_payment"]:
                 permission_classes = [permissions.IsDebtor]        
@@ -57,18 +54,18 @@ class DebtView(ModelViewSet):
 
     @action("post", detail=True, url_path="pay")
     def pay(self, request):
-        self._perform_transition_action(StatusDebt.CONFIRMED, StatusDebt.PAIED, self.request.user,
-                                        "debt status updated to paied.", "you can not change this status to paied.")
+        self._perform_transition_action(StatusDebt.CONFIRMED, StatusDebt.PAID, self.request.user,
+                                        "debt status updated to paid.", "you can not change this status to paid.")
 
     @action("post", detail=True, url_path="confirm_payment")
     def confirm_payment(self, request):
-        self._perform_transition_action(StatusDebt.PAIED, StatusDebt.PAYCONFIRMED, self.request.user,
+        self._perform_transition_action(StatusDebt.PAID, StatusDebt.PAYCONFIRMED, self.request.user,
                                         "payment confirmed successfully.", "you can not confirm the debt payment yet.")
     
     def update(self, request, *args, **kwargs):
-        return Response({"error": "You can not update debt objects using this action. Use declared actions insted."},
+        return Response({"error": "You can not update debt objects using this action. Use declared actions instead."},
                  status=status.HTTP_405_METHOD_NOT_ALLOWED)
     
     def partial_update(self, request, *args, **kwargs):
-        return Response({"error": "You can not update debt objects using this action. Use declared actions insted."},
+        return Response({"error": "You can not update debt objects using this action. Use declared actions instead."},
                  status=status.HTTP_405_METHOD_NOT_ALLOWED)

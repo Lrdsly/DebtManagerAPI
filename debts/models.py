@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 
-from users.models import Room, FriendShip, MemberShip, ModeChoise
+from users.models import Room, FriendShip, MemberShip, ModeChoice
 # Create your models here.
 
 User = get_user_model()
@@ -14,7 +14,7 @@ class StatusDebt(models.IntegerChoices):
     PENDING = 1, _("pending"),
     CONFIRMED = 2, _("confirmed"),
     REJECTED = 3, _("rejected"),
-    PAIED = 4, _("paied"),
+    PAID = 4, _("paid"),
     PAYCONFIRMED = 5, ("pay_confirmed")
 
 
@@ -26,7 +26,7 @@ class Debt(models.Model):
     room = models.ForeignKey(Room, on_delete=models.PROTECT, blank=True)
     description = models.CharField(_("description"), max_length=150, blank=True, null=True)
     status = models.IntegerField(_("status"), choices=StatusDebt, default=1)
-    paied_at = models.DateTimeField(_("Paied time"), blank=True, null=True)
+    paid_at = models.DateTimeField(_("Paid time"), blank=True, null=True)
     created_at = models.DateTimeField(_("Created time"), auto_now_add=True)
 
     class Meta:
@@ -46,9 +46,9 @@ class Debt(models.Model):
             raise ValidationError("Debtor and Creditor can not be same")
         
         if self.room == global_room:
-            freindship = FriendShip.objects.filter(Q(user1=self.creditor, user2=self.debtor) | Q(user1=self.debtor, user2=self.creditor)).exists()
-            if not freindship:
-                raise ValidationError("Only friend users can sumbit debts on global room")
+            friendship = FriendShip.objects.filter(Q(user1=self.creditor, user2=self.debtor) | Q(user1=self.debtor, user2=self.creditor)).exists()
+            if not friendship:
+                raise ValidationError("Only friend users can submit debts on global room")
        
         room_memberships = MemberShip.objects.filter(room=self.room).values_list("user__username", flat=True)
         if not self.creditor.username in room_memberships or not self.debtor.username in room_memberships:
@@ -56,11 +56,11 @@ class Debt(models.Model):
    
     def _suggest_next_status(self, current_status):
         if current_status == StatusDebt.PENDING:
-            if self.room.mode in [ModeChoise.TRUSTED, ModeChoise.HALFTRUSTED]:
+            if self.room.mode in [ModeChoice.TRUSTED, ModeChoice.HALFTRUSTED]:
                 return StatusDebt.CONFIRMED
             return current_status
-        elif current_status == StatusDebt.PAIED:
-            if self.room.mode == ModeChoise.Trusted:
+        elif current_status == StatusDebt.PAID:
+            if self.room.mode == ModeChoice.TRUSTED:
                 return StatusDebt.PAYCONFIRMED
             return current_status
         return current_status
@@ -79,6 +79,6 @@ class Debt(models.Model):
 class StatusLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     debt = models.ForeignKey(Debt, on_delete=models.DO_NOTHING)
-    from_status = models.ForeignKey(StatusDebt)
-    to_status = models.ForeignKey(StatusDebt)
+    from_status = models.ForeignKey(StatusDebt, on_delete=models.DO_NOTHING)
+    to_status = models.ForeignKey(StatusDebt, on_delete=models.DO_NOTHING)
     operated_at = models.DateTimeField(auto_now_add=True)

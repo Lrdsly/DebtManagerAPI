@@ -77,10 +77,10 @@ class UserSerializer(PublicUserSerializer):
             if action == "list":
                 allowed = ["name", "username", "joined_rooms", "status"]
             elif action == "retrieve":
-                allowed = ["name", "username", "joined_rooms", "rooms", "lost_login", "created_at",
+                allowed = ["name", "username", "joined_rooms", "rooms", "last_login", "created_at",
                             "is_premium", "is_staff", "is_superuser", "is_suspend", "user_permissions"]
             elif action in ["update", "partial_update"]:
-                allowd = ["is_suspend", "is_premium"]
+                allowed = ["is_suspend", "is_premium"]
                 if request.user.is_superuser:
                     allowed.append("is_staff")
             fields = {key: value for key, value in fields.items() if key in allowed}
@@ -100,7 +100,7 @@ class LoginSerializer(serializers.Serializer):
                             username=attrs.get("username"),
                             password=attrs.get("password"))
         if not user:
-            raise serializers.ValidationError("username of password is not correct.")
+            raise serializers.ValidationError("username or password is not correct.")
         attrs["user"] = user
         return attrs
 
@@ -166,7 +166,7 @@ class RoomSerializer(serializers.ModelSerializer):
             total_debt = counters.get_user_total_debt(obj.slug, username)
             members_property.append({
                 "username": username,
-                "totaol_debt": total_debt
+                "total_debt": total_debt
             })
         return members_property
 

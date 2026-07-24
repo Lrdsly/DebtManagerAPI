@@ -25,7 +25,6 @@ class IsRoomAdmin(BasePermission):
 class IsMember(BasePermission):
     
     def has_object_permission(self, request, view, obj):
-        auth = request.user.authenticated
-        if auth:
-            membersip = MemberShip.objects.filter(user=request.user, room=obj).exists()
-        return membersip
+        if not request.user.is_authenticated:
+            return False
+        return MemberShip.objects.filter(user=request.user, room=obj).exists()

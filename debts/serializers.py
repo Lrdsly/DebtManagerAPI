@@ -17,7 +17,7 @@ class DebtSerializer(serializers.ModelSerializer):
     def get_fields(self, *args, **kwargs):
         fields = super().get_fields(*args, **kwargs)
         request = self.context.get("request")
-        view = request.context.get("view")
+        view = self.context.get("view")
         action = getattr(view, "action", None)
 
         if not action in ["retrieve"]:

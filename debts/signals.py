@@ -13,19 +13,19 @@ def send_notification(sender, instance, created, *args, **kwargs):
 
         def create_status_log_and_notifications():
             user = getattr(instance, "_user")
-            pervious_status = getattr(instance, "_pervious_status")
+            previous_status = getattr(instance, "_previous_status")
 
             StatusLog.objects.create(
                 user=user,
                 debt=instance,
-                from_status=pervious_status,
+                from_status=previous_status,
                 to_status=instance.status
                 )
             
             static_data = {"status": NotificationStatus.UNREAD,
                            "title": "Debt Status Changed.",
-                           "text": f"debt status changed from {pervious_status} to {instance.status} bu {user}."}
-            notification = [Notification(reciver=instance.debtor, **static_data), Notification(reciver=instance.creditor, **static_data)]
+                           "text": f"debt status changed from {previous_status} to {instance.status} by {user}."}
+            notification = [Notification(receiver=instance.debtor, **static_data), Notification(reciver=instance.creditor, **static_data)]
             Notification.objects.bulk_create(notification)
 
         transaction.on_commit(create_status_log_and_notifications)

@@ -18,13 +18,12 @@ def get_user_total_debt(slug, username):
         else:
             total_amount -= debt.amount
     
-    # if the number is negetive it mean user want some amount of money at last
+    # if the number is negative it mean user want some amount of money at last
     return total_amount 
 
 def get_total_value(slug):
     total_value = 0
     room = Room.objects.get(slug=slug)
-    print('-'*20)
     memberships = MemberShip.objects.filter(room=room)
     for member in memberships:
         user_total_debt = get_user_total_debt(slug, member.user.username)
@@ -32,5 +31,5 @@ def get_total_value(slug):
             # -user_total_debt = user_credit
             total_value -= user_total_debt
 
-    # the whole amount of mony which most be paied in this room
+    # the whole amount of money which most be paid in this room
     return total_value
