@@ -20,8 +20,8 @@ class StatusDebt(models.IntegerChoices):
 
 class Debt(models.Model):
 
-    debtor = models.ForeignKey(User, on_delete=models.PROTECT)
-    creditor = models.ForeignKey(User, on_delete=models.PROTECT)
+    debtor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="borrowed")
+    creditor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="lent")
     amount = models.DecimalField(_("debt amount"), max_digits=13, decimal_places=2)
     room = models.ForeignKey(Room, on_delete=models.PROTECT, blank=True)
     description = models.CharField(_("description"), max_length=150, blank=True, null=True)

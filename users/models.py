@@ -58,7 +58,7 @@ class NotificationStatus(models.IntegerChoices):
 
 class Notification(models.Model):
 
-    receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    receiver = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="notifications")
     title = models.CharField(_("title"), max_length=50)
     text = models.TextField(_("notification text"), max_length=500, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -79,7 +79,7 @@ class Room(models.Model):
     
     name = models.CharField(verbose_name=_("Room name"), max_length=100, blank=True, null=True)
     slug = models.SlugField(verbose_name=_("Room slug"), max_length=100, unique=True) # add auto generate slug later
-    admin = models.ForeignKey(verbose_name=_("Room admin"), to="users.CustomUser", on_delete=models.CASCADE, related_name="room_admin")
+    admin = models.ForeignKey(verbose_name=_("Room admin"), to="users.CustomUser", on_delete=models.CASCADE, related_name="owned_rooms")
     mode = models.IntegerField(verbose_name=_("Room status"), choices=ModeChoice, default=1)
     created_at = models.DateTimeField(verbose_name=_("Created time"), auto_now_add=True)
 
@@ -88,8 +88,8 @@ class Room(models.Model):
     
 
 class MemberShip(models.Model):
-    user = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, related_name="membership_user")
-    room = models.ForeignKey("users.Room", on_delete=models.CASCADE, related_name="membership_room")
+    user = models.ForeignKey("users.CustomUser", on_delete=models.CASCADE, related_name="joined_rooms")
+    room = models.ForeignKey("users.Room", on_delete=models.CASCADE, related_name="members")
     joined = models.DateTimeField(verbose_name=_("Joined Time"), auto_now_add=True)
 
 
