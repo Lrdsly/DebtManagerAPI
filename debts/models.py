@@ -79,6 +79,6 @@ class Debt(models.Model):
 class StatusLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.DO_NOTHING)
     debt = models.ForeignKey(Debt, on_delete=models.DO_NOTHING)
-    from_status = models.ForeignKey(StatusDebt, on_delete=models.DO_NOTHING)
-    to_status = models.ForeignKey(StatusDebt, on_delete=models.DO_NOTHING)
+    to_status = models.IntegerField(_("current status"), choices=StatusDebt)
+    from_status = models.IntegerField(_("previous status"), choices=StatusDebt)
     operated_at = models.DateTimeField(auto_now_add=True)

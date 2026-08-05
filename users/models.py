@@ -62,7 +62,7 @@ class Notification(models.Model):
     title = models.CharField(_("title"), max_length=50)
     text = models.TextField(_("notification text"), max_length=500, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    status = models.ForeignKey(NotificationStatus)
+    status = models.IntegerField(_("notification status"), choices=NotificationStatus, default=NotificationStatus.UNREAD)
     
     class Meta:
         verbose_name = _("notification")
