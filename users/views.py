@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.db.models import Q
 
 from django.contrib.auth import get_user_model, login
+from django.shortcuts import get_object_or_404
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -11,7 +12,7 @@ from rest_framework.decorators import action
 
 
 from users.serializers import *
-from users.models import Notification
+from users.models import Notification, NotificationStatus
 from users.utils import permissions
 from debts.serializers import DebtSerializer
 # Create your views here.
@@ -98,6 +99,20 @@ class NotificationView(APIView):
         notifications = Notification.objects.filter(receiver=self.request.user)
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk):
+        notification = get_object_or_404(
+            Notification,
+            pk = pk,
+            receiver = request.user
+        )
+
+        notification.status = NotificationStatus.CHECKED
+        notification.save(update_fields=["status"])
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class RoomView(ModelViewSet):
     queryset = Room.objects.all()
     serializer_class = RoomSerializer

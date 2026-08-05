@@ -13,5 +13,6 @@ urlpatterns = [
     path('', include(router.urls)),   
     path('users/login', LoginView.as_view(), name='login'),
     path('users/register', RegisterView.as_view(), name="register"),
-    path('notifications/', NotificationView.as_view(), name="notifications")
+    path('notifications/', NotificationView.as_view(), name="notifications"),
+    path('notifications/<int:pk>/', NotificationView.as_view(), name="notifications_update"),
 ]
