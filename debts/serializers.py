@@ -1,10 +1,12 @@
 from rest_framework import serializers
 
 from debts.models import Debt
+
 # Enter your code here.
 
 
 class DebtSerializer(serializers.ModelSerializer):
+
     status = serializers.CharField()
     debtor = serializers.CharField(source="debtor.username")
     creditor = serializers.CharField(source="creditor.username")
@@ -24,5 +26,5 @@ class DebtSerializer(serializers.ModelSerializer):
             exclude = ["paied_at", "created_at", "description"]
             for key in exclude:
                 fields.pop(key)
-        
+
         return fields

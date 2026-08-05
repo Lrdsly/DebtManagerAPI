@@ -1,10 +1,13 @@
 from django.contrib.auth import get_user_model
 from django.db.models import Q
+
 from debts.models import Debt
-from users.models import Room, MemberShip
+from users.models import MemberShip, Room
+
 # Enter your code here.
 
 User = get_user_model()
+
 
 def get_user_total_debt(slug, username):
     total_amount = 0
@@ -17,9 +20,10 @@ def get_user_total_debt(slug, username):
             total_amount += debt.amount
         else:
             total_amount -= debt.amount
-    
+
     # if the number is negative it mean user want some amount of money at last
-    return total_amount 
+    return total_amount
+
 
 def get_total_value(slug):
     total_value = 0

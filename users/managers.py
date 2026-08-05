@@ -1,4 +1,5 @@
 from django.contrib.auth.base_user import BaseUserManager
+
 # Enter your code here.
 
 
@@ -33,4 +34,3 @@ class CUserManager(BaseUserManager):
             raise ValueError("Superuser must have is_premium=True.")
 
         return self._create_user(username, password, **extra_fields)
-    

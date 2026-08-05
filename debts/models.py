@@ -1,20 +1,33 @@
-from django.db import models
-from django.core.exceptions import ValidationError
 from django.contrib.auth import get_user_model
-from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
+from django.db import models
 from django.db.models import Q
+from django.utils.translation import gettext_lazy as _
 
-from users.models import Room, FriendShip, MemberShip, ModeChoice
+from users.models import FriendShip, MemberShip, ModeChoice, Room
+
 # Create your models here.
 
 User = get_user_model()
 
 
 class StatusDebt(models.IntegerChoices):
-    PENDING = 1, _("pending"),
-    CONFIRMED = 2, _("confirmed"),
-    REJECTED = 3, _("rejected"),
-    PAID = 4, _("paid"),
+    PENDING = (
+        1,
+        _("pending"),
+    )
+    CONFIRMED = (
+        2,
+        _("confirmed"),
+    )
+    REJECTED = (
+        3,
+        _("rejected"),
+    )
+    PAID = (
+        4,
+        _("paid"),
+    )
     PAYCONFIRMED = 5, ("pay_confirmed")
 
 
@@ -24,7 +37,9 @@ class Debt(models.Model):
     creditor = models.ForeignKey(User, on_delete=models.PROTECT, related_name="lent")
     amount = models.DecimalField(_("debt amount"), max_digits=13, decimal_places=2)
     room = models.ForeignKey(Room, on_delete=models.PROTECT, blank=True)
-    description = models.CharField(_("description"), max_length=150, blank=True, null=True)
+    description = models.CharField(
+        _("description"), max_length=150, blank=True, null=True
+    )
     status = models.IntegerField(_("status"), choices=StatusDebt, default=1)
     paid_at = models.DateTimeField(_("Paid time"), blank=True, null=True)
     created_at = models.DateTimeField(_("Created time"), auto_now_add=True)
@@ -32,8 +47,8 @@ class Debt(models.Model):
     class Meta:
         verbose_name = "debt"
         verbose_name_plural = "debts"
-        ordering = ['status', '-created_at']
-    
+        ordering = ["status", "-created_at"]
+
     def __str__(self):
         return f"Debt of {self.debtor} with amount of {self.amount} to {self.creditor}"
 
@@ -44,16 +59,28 @@ class Debt(models.Model):
 
         if self.creditor == self.debtor:
             raise ValidationError("Debtor and Creditor can not be same")
-        
+
         if self.room == global_room:
-            friendship = FriendShip.objects.filter(Q(user1=self.creditor, user2=self.debtor) | Q(user1=self.debtor, user2=self.creditor)).exists()
+            friendship = FriendShip.objects.filter(
+                Q(user1=self.creditor, user2=self.debtor)
+                | Q(user1=self.debtor, user2=self.creditor)
+            ).exists()
             if not friendship:
-                raise ValidationError("Only friend users can submit debts on global room")
-       
-        room_memberships = MemberShip.objects.filter(room=self.room).values_list("user__username", flat=True)
-        if not self.creditor.username in room_memberships or not self.debtor.username in room_memberships:
-            raise ValidationError("Debtor and Creditor must be in the room at the same time")
-   
+                raise ValidationError(
+                    "Only friend users can submit debts on global room"
+                )
+
+        room_memberships = MemberShip.objects.filter(room=self.room).values_list(
+            "user__username", flat=True
+        )
+        if (
+            not self.creditor.username in room_memberships
+            or not self.debtor.username in room_memberships
+        ):
+            raise ValidationError(
+                "Debtor and Creditor must be in the room at the same time"
+            )
+
     def _suggest_next_status(self, current_status):
         if current_status == StatusDebt.PENDING:
             if self.room.mode in [ModeChoice.TRUSTED, ModeChoice.HALFTRUSTED]:
@@ -70,10 +97,11 @@ class Debt(models.Model):
         suggested_status = self._suggest_next_status(new_status)
         self.status = suggested_status
         self.save()
-   
+
         if suggested_status != new_status:
             return suggested_status
-        else: return new_status
+        else:
+            return new_status
 
 
 class StatusLog(models.Model):
